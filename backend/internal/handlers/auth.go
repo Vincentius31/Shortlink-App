@@ -8,17 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AuthHandler struct{
+type AuthHandler struct {
 	userService *service.UserService
 }
 
-func NewAuthHandler(us *service.UserService) *AuthHandler{
+func NewAuthHandler(us *service.UserService) *AuthHandler {
 	return &AuthHandler{
 		userService: us,
 	}
 }
 
-func (h *AuthHandler) Register(ctx *gin.Context){
+func (h *AuthHandler) Register(ctx *gin.Context) {
 	var req model.RegisterRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -41,7 +41,7 @@ func (h *AuthHandler) Register(ctx *gin.Context){
 		ctx.JSON(statusCode, model.WebResponse{
 			Success: false,
 			Message: err.Error(),
-			Results:    nil,
+			Results: nil,
 		})
 		return
 	}
@@ -59,7 +59,7 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, model.WebResponse{
 			Success: false,
 			Message: "Email and password are required",
-			Results:    nil,
+			Results: nil,
 		})
 		return
 	}
@@ -69,7 +69,7 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, model.WebResponse{
 			Success: false,
 			Message: err.Error(),
-			Results:    nil,
+			Results: nil,
 		})
 		return
 	}
@@ -77,6 +77,6 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, model.WebResponse{
 		Success: true,
 		Message: "Login successful",
-		Results:    response,
+		Results: response,
 	})
 }
