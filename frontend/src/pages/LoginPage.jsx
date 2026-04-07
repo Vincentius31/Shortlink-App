@@ -4,61 +4,86 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
+import http from "../lib/http";
+import { useAuth } from "../hooks/useAuth";
 
-const loginSchema = yup.object().shape({
-  email: yup
-    .string()
-    .email("Invalid email format")
-    .required("Email is required"),
-  password: yup
-    .string()
-    .min(6, "Password must be at least 6 characters")
-    .required("Password is required"),
+const schema = yup.object({
+  email: yup.string().email("Invalid email format").required("Email is required"),
+  password: yup.string().min(6, "Password must be at least 6 characters").required("Password is required")
 });
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [apiError, setApiError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors }
   } = useForm({
-    resolver: yupResolver(loginSchema),
-    mode: "onBlur",
+    resolver: yupResolver(schema)
   });
 
   const onSubmit = async (data) => {
     setIsLoading(true);
-    console.log("Login data:", data);
-    // TODO: Integrate with backend API
-    setTimeout(() => {
+    setApiError("");
+
+    try {
+      const result = await http("/api/login", {
+        method: "POST",
+        body: {
+          email: data.email,
+          password: data.password
+        }
+      });
+
+      if (result && result.success) {
+        login(result.results.token);
+        localStorage.setItem("user_email", data.email);
+        alert("Login successful!");
+        navigate("/dashboard");
+      } else {
+        setApiError(result.message || "Invalid email or password");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setApiError("An error occurred. Please try again.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-linear-to-br from-blue-50 via-sky-50 to-indigo-100 font-sans">
-      
+    <div className="min-h-screen flex flex-col bg-[#f5f8fc] font-sans">
+
       <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
-        
+
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 mb-6 sm:mb-8">
-          <span className="text-xl sm:text-2xl font-bold text-gray-900">ShortLink</span>
-        </Link>
+        <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-6 sm:mb-8 tracking-tight">
+          ShortLink
+        </h1>
 
         {/* Card Login */}
-        <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+        <div className="bg-white w-full max-w-105 rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Welcome Back</h2>
           <p className="text-xs sm:text-sm text-gray-500 mb-6">
             Please enter your details to sign in.
           </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
-            
+          {/* API Error */}
+          {apiError && (
+            <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 border border-red-200 text-sm">
+              {apiError}
+            </div>
+          )}
+
+          <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit(onSubmit)}>
+
             {/* Input Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -67,15 +92,12 @@ const LoginPage = () => {
               <input
                 type="email"
                 placeholder="name@company.com"
+                className={`w-full px-4 py-2.5 border rounded-lg text-sm placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-colors ${errors.email ? 'border-red-500' : 'border-gray-200'
+                  }`}
                 {...register("email")}
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-blue-600 transition-colors ${
-                  errors.email 
-                    ? "border-red-300 focus:ring-red-500/20" 
-                    : "border-gray-200 focus:ring-blue-600/20"
-                }`}
               />
               {errors.email && (
-                <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
               )}
             </div>
 
@@ -85,20 +107,17 @@ const LoginPage = () => {
                 <label className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <Link to="/forgot-password" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+                <a href="#" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
                   Forgot password?
-                </Link>
+                </a>
               </div>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
+                  className={`w-full px-4 py-2.5 border rounded-lg text-sm placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-colors ${errors.password ? 'border-red-500' : 'border-gray-200'
+                    }`}
                   {...register("password")}
-                  className={`w-full px-4 py-2.5 border rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-blue-600 transition-colors ${
-                    errors.password 
-                      ? "border-red-300 focus:ring-red-500/20" 
-                      : "border-gray-200 focus:ring-blue-600/20"
-                  }`}
                 />
                 <button
                   type="button"
@@ -109,7 +128,7 @@ const LoginPage = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
               )}
             </div>
 
@@ -117,15 +136,9 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 mt-2 transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#1d58d8] hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 mt-2 transition-colors"
             >
-              {isLoading ? (
-                <span>Logging in...</span>
-              ) : (
-                <>
-                  Log In <FiArrowRight size={18} />
-                </>
-              )}
+              {isLoading ? "Logging in..." : "Log In"} <FiArrowRight size={18} />
             </button>
           </form>
 
@@ -150,16 +163,13 @@ const LoginPage = () => {
 
         {/* Tautan Sign Up */}
         <p className="mt-6 sm:mt-8 text-xs sm:text-sm text-gray-500">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-blue-600 font-semibold hover:underline">
-            Sign up
-          </Link>
+          Don't have an account? <Link to="/register" className="text-blue-600 font-medium hover:underline">Sign up</Link>
         </p>
 
       </main>
 
       <Footer variant="login" />
-      
+
     </div>
   );
 };
