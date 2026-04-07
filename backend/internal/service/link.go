@@ -124,3 +124,12 @@ func (s *LinkService) Delete(ctx context.Context, userID, linkID int) error {
 
 	return s.repo.SoftDelete(ctx, linkID)
 }
+
+// GetOriginalURL retrieves original URL for redirect
+func (s *LinkService) GetOriginalURL(ctx context.Context, slug string) (string, error) {
+	link, err := s.repo.GetBySlug(ctx, slug)
+	if err != nil {
+		return "", errors.New("Link not found")
+	}
+	return link.OriginalURL, nil
+}
