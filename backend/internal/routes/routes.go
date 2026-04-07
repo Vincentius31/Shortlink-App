@@ -25,5 +25,6 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 	{
 		linkRoutes.POST("/links", linkHandler.Create)
 		linkRoutes.GET("/links", linkHandler.GetAll)
+		linkRoutes.DELETE("/links/:id", linkHandler.Delete)
 	}
 }
