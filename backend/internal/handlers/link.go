@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"shortlink-app/internal/model"
 	"shortlink-app/internal/service"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -81,5 +82,44 @@ func (h *LinkHandler) GetAll(ctx *gin.Context) {
 		Success: true,
 		Message: "Links retrieved successfully",
 		Results: links,
+	})
+}
+
+// Delete soft deletes a link
+func (h *LinkHandler) Delete(ctx *gin.Context) {
+	userID, exists := ctx.Get("user_id")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, model.WebResponse{
+			Success: false,
+			Message: "Unauthorized",
+			Results: nil,
+		})
+		return
+	}
+
+	linkIDStr := ctx.Param("id")
+	linkID, err := strconv.Atoi(linkIDStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, model.WebResponse{
+			Success: false,
+			Message: "Invalid link ID",
+			Results: nil,
+		})
+		return
+	}
+
+	if err := h.linkService.Delete(ctx.Request.Context(), userID.(int), linkID); err != nil {
+		ctx.JSON(http.StatusForbidden, model.WebResponse{
+			Success: false,
+			Message: err.Error(),
+			Results: nil,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, model.WebResponse{
+		Success: true,
+		Message: "Link deleted successfully",
+		Results: nil,
 	})
 }
