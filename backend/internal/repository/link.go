@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"shortlink-app/internal/model"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -36,4 +38,53 @@ func (r *LinkRepository) SlugExists(ctx context.Context, slug string) (bool, err
 		return false, err
 	}
 	return count > 0, nil
+}
+
+// GetBySlug retrieves a link by its slug (for redirect)
+func (r *LinkRepository) GetBySlug(ctx context.Context, slug string) (*model.Link, error) {
+	fmt.Printf("[DEBUG] Repository GetBySlug called with slug: %s\n", slug)
+	query := `
+		SELECT id, user_id, original_url, slug, created_at, deleted_at
+		FROM links
+		WHERE slug = $1 AND deleted_at IS NULL
+	`
+	rows, err := r.db.Query(ctx, query, slug)
+	if err != nil {
+		fmt.Printf("[DEBUG] Query error: %v\n", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	link, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.Link])
+	if err != nil {
+		fmt.Printf("[DEBUG] CollectOneRow error: %v\n", err)
+		return nil, err
+	}
+	fmt.Printf("[DEBUG] Found link in DB: %+v\n", link)
+	return &link, nil
+}
+
+// GetByUserID retrieves all links for a user
+func (r *LinkRepository) GetByUserID(ctx context.Context, userID int) ([]model.Link, error) {
+	fmt.Printf("[DEBUG] GetByUserID called with userID: %d\n", userID)
+	query := `
+		SELECT id, user_id, original_url, slug, created_at, deleted_at
+		FROM links
+		WHERE user_id = $1 AND deleted_at IS NULL
+		ORDER BY created_at DESC
+	`
+	rows, err := r.db.Query(ctx, query, userID)
+	if err != nil {
+		fmt.Printf("[DEBUG] Query error: %v\n", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	links, err := pgx.CollectRows(rows, pgx.RowToStructByName[model.Link])
+	if err != nil {
+		fmt.Printf("[DEBUG] CollectRows error: %v\n", err)
+		return nil, err
+	}
+	fmt.Printf("[DEBUG] Found %d links for user %d\n", len(links), userID)
+	return links, nil
 }
