@@ -1,33 +1,66 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import {
-  FiArrowLeft,
-  FiLink,
-  FiEye,
-  FiZap,
-  FiTrendingUp,
-  FiGrid
-} from "react-icons/fi";
+import http from "../lib/http"; 
+import { FiArrowLeft, FiLink, FiEye, FiZap, FiTrendingUp, FiGrid } from "react-icons/fi";
 
 const CreateLinkPage = () => {
-  // State untuk mengontrol live preview dari custom slug
+  const navigate = useNavigate();
+  
+  const [originalUrl, setOriginalUrl] = useState("");
   const [customSlug, setCustomSlug] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!originalUrl.startsWith("http://") && !originalUrl.startsWith("https://")) {
+      alert("URL must start with http:// or https://");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        original_url: originalUrl,
+        slug: customSlug || undefined
+      };
+
+      const response = await http("/api/links", {
+        method: "POST",
+        body: payload
+      });
+
+      if (response.success) {
+        alert("Link successfully created!");
+        navigate("/dashboard"); 
+      } else {
+        alert(response.message || "Failed to create link.");
+      }
+    } catch (error) {
+      console.error("Error creating link:", error);
+      alert("An error occurred while creating the link.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fbfcfd] font-sans">
-
+      
       <Navbar isLoggedIn={true} activePage="dashboard" />
-
+      
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-
+        
         {/* Tombol Back */}
-        <a
-          href="#"
-          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors mb-6"
+        <button 
+          onClick={() => navigate("/dashboard")}
+          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors mb-6 focus:outline-none"
         >
           <FiArrowLeft size={16} /> Back to Dashboard
-        </a>
+        </button>
 
         {/* Header Section */}
         <div className="mb-8">
@@ -41,8 +74,8 @@ const CreateLinkPage = () => {
 
         {/* Card Form Utama */}
         <div className="bg-white border border-gray-100 shadow-[0_2px_15px_rgb(0,0,0,0.03)] rounded-2xl p-6 sm:p-8 mb-10">
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            
             {/* Input Destination URL */}
             <div>
               <label className="block text-xs font-bold text-gray-700 tracking-widest uppercase mb-2">
@@ -55,8 +88,11 @@ const CreateLinkPage = () => {
                 <input
                   type="url"
                   placeholder="https://example.com/your-long-url-here"
+                  value={originalUrl}
+                  onChange={(e) => setOriginalUrl(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-colors"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
               <p className="mt-2 text-[11px] italic text-gray-400">
@@ -79,6 +115,7 @@ const CreateLinkPage = () => {
                   value={customSlug}
                   onChange={(e) => setCustomSlug(e.target.value)}
                   className="flex-1 px-4 py-3 text-sm outline-none placeholder-gray-300"
+                  disabled={isSubmitting}
                 />
               </div>
               <p className="mt-2 text-[11px] italic text-gray-400">
@@ -97,9 +134,9 @@ const CreateLinkPage = () => {
                 </h4>
                 <p className="text-sm text-gray-700">
                   Your short link will be:{" "}
-                  <a href="#" className="text-blue-600 font-semibold break-all">
+                  <span className="text-blue-600 font-semibold break-all">
                     https://short.link/{customSlug || <span className="text-gray-400 font-normal italic">random-id</span>}
-                  </a>
+                  </span>
                 </p>
               </div>
             </div>
@@ -108,12 +145,15 @@ const CreateLinkPage = () => {
             <div className="pt-4 flex flex-col sm:flex-row items-center gap-4">
               <button
                 type="submit"
-                className="w-full sm:w-auto bg-[#1d58d8] hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
+                disabled={isSubmitting}
+                className={`w-full sm:w-auto bg-[#1d58d8] hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors shadow-sm ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                Create Link <FiZap size={16} />
+                {isSubmitting ? "Creating..." : "Create Link"} <FiZap size={16} />
               </button>
               <button
                 type="button"
+                onClick={() => navigate("/dashboard")}
+                disabled={isSubmitting}
                 className="w-full sm:w-auto bg-transparent hover:bg-gray-50 text-gray-600 font-medium py-3 px-8 rounded-lg text-sm transition-colors"
               >
                 Cancel
@@ -125,8 +165,6 @@ const CreateLinkPage = () => {
 
         {/* Feature Highlights (Bottom Section) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-2xl mx-auto">
-
-          {/* Feature 1 */}
           <div className="flex items-start gap-4">
             <div className="bg-orange-100 text-orange-600 p-2.5 rounded-full shrink-0 mt-1">
               <FiTrendingUp size={18} />
@@ -138,8 +176,6 @@ const CreateLinkPage = () => {
               </p>
             </div>
           </div>
-
-          {/* Feature 2 */}
           <div className="flex items-start gap-4">
             <div className="bg-indigo-100 text-indigo-600 p-2.5 rounded-full shrink-0 mt-1">
               <FiGrid size={18} />
@@ -151,14 +187,11 @@ const CreateLinkPage = () => {
               </p>
             </div>
           </div>
-
         </div>
 
       </main>
 
-      {/* Footer Utama */}
       <Footer />
-
     </div>
   );
 };
