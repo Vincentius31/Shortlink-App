@@ -24,5 +24,6 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 	linkRoutes.Use(middleware.AuthMiddleware())
 	{
 		linkRoutes.POST("/links", linkHandler.Create)
+		linkRoutes.GET("/links", linkHandler.GetAll)
 	}
 }
