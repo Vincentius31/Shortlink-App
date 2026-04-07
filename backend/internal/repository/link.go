@@ -24,3 +24,16 @@ func (r *LinkRepository) Create(ctx context.Context, link model.Link) error {
 	_, err := r.db.Exec(ctx, query, link.UserID, link.OriginalURL, link.Slug, time.Now())
 	return err
 }
+
+// SlugExists checks if a slug already exists
+func (r *LinkRepository) SlugExists(ctx context.Context, slug string) (bool, error) {
+	query := `
+		SELECT COUNT(*) FROM links WHERE slug = $1 AND deleted_at IS NULL
+	`
+	var count int
+	err := r.db.QueryRow(ctx, query, slug).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
