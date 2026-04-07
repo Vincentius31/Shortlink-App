@@ -66,7 +66,6 @@ func (r *LinkRepository) GetBySlug(ctx context.Context, slug string) (*model.Lin
 
 // GetByUserID retrieves all links for a user
 func (r *LinkRepository) GetByUserID(ctx context.Context, userID int) ([]model.Link, error) {
-	fmt.Printf("[DEBUG] GetByUserID called with userID: %d\n", userID)
 	query := `
 		SELECT id, user_id, original_url, slug, created_at, deleted_at
 		FROM links
@@ -75,7 +74,6 @@ func (r *LinkRepository) GetByUserID(ctx context.Context, userID int) ([]model.L
 	`
 	rows, err := r.db.Query(ctx, query, userID)
 	if err != nil {
-		fmt.Printf("[DEBUG] Query error: %v\n", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -85,6 +83,36 @@ func (r *LinkRepository) GetByUserID(ctx context.Context, userID int) ([]model.L
 		fmt.Printf("[DEBUG] CollectRows error: %v\n", err)
 		return nil, err
 	}
-	fmt.Printf("[DEBUG] Found %d links for user %d\n", len(links), userID)
 	return links, nil
+}
+
+// GetByID retrieves a link by ID (for ownership check)
+func (r *LinkRepository) GetByID(ctx context.Context, id int) (*model.Link, error) {
+	query := `
+		SELECT id, user_id, original_url, slug, created_at, deleted_at
+		FROM links
+		WHERE id = $1
+	`
+	rows, err := r.db.Query(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	link, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.Link])
+	if err != nil {
+		return nil, err
+	}
+	return &link, nil
+}
+
+// SoftDelete marks a link as deleted
+func (r *LinkRepository) SoftDelete(ctx context.Context, id int) error {
+	query := `
+		UPDATE links
+		SET deleted_at = $1
+		WHERE id = $2
+	`
+	_, err := r.db.Exec(ctx, query, time.Now(), id)
+	return err
 }
