@@ -87,3 +87,25 @@ func (s *LinkService) Create(ctx context.Context, userID int, req model.CreateLi
 		CreatedAt: link.CreatedAt.Format(time.RFC3339),
 	}, nil
 }
+
+func (s *LinkService) GetAll(ctx context.Context, userID int) ([]model.LinkResponse, error) {
+	links, err := s.repo.GetByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	baseURL := getBaseURL()
+
+	var responses []model.LinkResponse
+	for _, link := range links {
+		responses = append(responses, model.LinkResponse{
+			ID:          link.ID,
+			OriginalURL: link.OriginalURL,
+			Slug:        link.Slug,
+			ShortURL:    baseURL + "/" + link.Slug,
+			CreatedAt:   link.CreatedAt.Format(time.RFC3339),
+		})
+	}
+
+	return responses, nil
+}
