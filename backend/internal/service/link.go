@@ -109,3 +109,18 @@ func (s *LinkService) GetAll(ctx context.Context, userID int) ([]model.LinkRespo
 
 	return responses, nil
 }
+
+// Delete soft deletes a link (only if owned by user)
+func (s *LinkService) Delete(ctx context.Context, userID, linkID int) error {
+	// Check ownership
+	link, err := s.repo.GetByID(ctx, linkID)
+	if err != nil {
+		return errors.New("Link not found")
+	}
+
+	if link.UserID != userID {
+		return errors.New("You don't have permission to delete this link")
+	}
+
+	return s.repo.SoftDelete(ctx, linkID)
+}
