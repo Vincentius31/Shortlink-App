@@ -123,3 +123,21 @@ func (h *LinkHandler) Delete(ctx *gin.Context) {
 		Results: nil,
 	})
 }
+
+// Redirect handles the short URL redirect
+func (h *LinkHandler) Redirect(ctx *gin.Context) {
+	slug := ctx.Param("slug")
+
+	originalURL, err := h.linkService.GetOriginalURL(ctx.Request.Context(), slug)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, model.WebResponse{
+			Success: false,
+			Message: "Link not found",
+			Results: nil,
+		})
+		return
+	}
+
+	
+	ctx.Redirect(http.StatusFound, originalURL)
+}
