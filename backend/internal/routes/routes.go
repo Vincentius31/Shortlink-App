@@ -27,4 +27,6 @@ func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 		linkRoutes.GET("/links", linkHandler.GetAll)
 		linkRoutes.DELETE("/links/:id", linkHandler.Delete)
 	}
+
+	r.GET("/:slug", linkHandler.Redirect)
 }
