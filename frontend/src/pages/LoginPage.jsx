@@ -9,22 +9,21 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#f5f8fc] font-sans">
       
-      {/* Kontainer Utama */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4">
+      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
         
         {/* Logo */}
-        <h1 className="text-2xl font-extrabold text-gray-900 mb-8 tracking-tight">
+        <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-6 sm:mb-8 tracking-tight">
           ShortLink
         </h1>
 
         {/* Card Login */}
-        <div className="bg-white w-full max-w-105 rounded-2xl shadow-sm border border-gray-100 p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back</h2>
-          <p className="text-sm text-gray-500 mb-6">
+        <div className="bg-white w-full max-w-105 rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Welcome Back</h2>
+          <p className="text-xs sm:text-sm text-gray-500 mb-6">
             Please enter your details to sign in.
           </p>
 
-          <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4 sm:space-y-5" onSubmit={(e) => e.preventDefault()}>
             
             {/* Input Email */}
             <div>
@@ -76,9 +75,9 @@ const LoginPage = () => {
           </form>
 
           {/* Divider */}
-          <div className="flex items-center my-6">
+          <div className="flex items-center my-5 sm:my-6">
             <div className="flex-1 border-t border-gray-100"></div>
-            <span className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <span className="px-3 sm:px-4 text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
               Or continue with
             </span>
             <div className="flex-1 border-t border-gray-100"></div>
@@ -95,14 +94,13 @@ const LoginPage = () => {
         </div>
 
         {/* Tautan Sign Up */}
-        <p className="mt-8 text-sm text-gray-500">
+        <p className="mt-6 sm:mt-8 text-xs sm:text-sm text-gray-500">
           Don't have an account? <a href="#" className="text-blue-600 font-medium hover:underline">sign up</a>
         </p>
 
       </main>
 
-      {/* Footer Ditempatkan di Bawah */}
-      <Footer />
+      <Footer variant="login" />
       
     </div>
   );
