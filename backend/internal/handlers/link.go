@@ -55,3 +55,31 @@ func (h *LinkHandler) Create(ctx *gin.Context) {
 		Results: response,
 	})
 }
+
+func (h *LinkHandler) GetAll(ctx *gin.Context) {
+	userID, exists := ctx.Get("user_id")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, model.WebResponse{
+			Success: false,
+			Message: "Unauthorized",
+			Results: nil,
+		})
+		return
+	}
+
+	links, err := h.linkService.GetAll(ctx.Request.Context(), userID.(int))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, model.WebResponse{
+			Success: false,
+			Message: err.Error(),
+			Results: nil,
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, model.WebResponse{
+		Success: true,
+		Message: "Links retrieved successfully",
+		Results: links,
+	})
+}
