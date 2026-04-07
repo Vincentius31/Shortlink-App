@@ -97,9 +97,11 @@ func (s *UserService) Login(ctx context.Context, req model.LoginRequest) (model.
 	}
 
 	return model.LoginResponse{
-		Token:  tokenString,
-		UserID: user.ID,
-		Email:  user.Email,
+		Token: tokenString,
+		User: model.UserBrief{
+			ID: user.ID,
+			Email:  user.Email,
+		},
 	}, nil
 }
 
