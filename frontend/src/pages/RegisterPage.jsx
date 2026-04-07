@@ -3,54 +3,69 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { FiArrowRight, FiLink, FiEye, FiEyeOff } from "react-icons/fi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
+import http from "../lib/http";
 
-const registerSchema = yup.object().shape({
-  email: yup
-    .string()
-    .email("Invalid email format")
-    .required("Email is required"),
-  password: yup
-    .string()
-    .min(6, "Password must be at least 6 characters")
-    .required("Password is required"),
+const schema = yup.object({
+  email: yup.string().email("Invalid email format").required("Email is required"),
+  password: yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
   confirmPassword: yup
     .string()
-    .oneOf([yup.ref("password")], "Passwords do not match")
-    .required("Confirm password is required"),
+    .oneOf([yup.ref('password')], "Passwords do not match")
+    .required("Confirm password is required")
 });
 
 const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [apiError, setApiError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors }
   } = useForm({
-    resolver: yupResolver(registerSchema),
-    mode: "onBlur",
+    resolver: yupResolver(schema)
   });
 
   const onSubmit = async (data) => {
     setIsLoading(true);
-    console.log("Register data:", data);
-    // TODO: Integrate with backend API
-    setTimeout(() => {
+    setApiError("");
+
+    try {
+      const result = await http("/api/register", {
+        method: "POST",
+        body: {
+          email: data.email,
+          password: data.password,
+          confirm_password: data.confirmPassword
+        }
+      });
+
+      if (result && result.success) {
+        alert("Registration successful! Please log in.");
+        navigate("/login");
+      } else {
+        setApiError(result.message || "Failed to register");
+      }
+    } catch (error) {
+      console.error("Register error:", error);
+      setApiError("An error occurred. Please try again.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-linear-to-br from-blue-50 via-sky-50 to-indigo-100 font-sans">
+    <div className="min-h-screen flex flex-col bg-[#f5f8fc] font-sans">
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
 
         {/* Logo Ikon */}
-        <div className="bg-linear-to-br from-blue-500 to-blue-600 text-white p-3 rounded-xl mb-4 sm:mb-6 shadow-lg shadow-blue-500/25">
+        <div className="bg-blue-100 text-blue-600 p-2 rounded-full mb-4 sm:mb-6">
           <FiLink size={24} strokeWidth={3} />
         </div>
 
@@ -63,8 +78,15 @@ const RegisterPage = () => {
         </p>
 
         {/* Card Form */}
-        <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-gray-100 p-6 sm:p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
+        <div className="bg-white w-full max-w-105 rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
+          {/* API Error */}
+          {apiError && (
+            <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 border border-red-200 text-sm">
+              {apiError}
+            </div>
+          )}
+
+          <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit(onSubmit)}>
 
             {/* Input Email */}
             <div>
@@ -74,15 +96,12 @@ const RegisterPage = () => {
               <input
                 type="email"
                 placeholder="name@company.com"
+                className={`w-full px-4 py-2.5 border rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-colors ${errors.email ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 {...register("email")}
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-blue-600 transition-colors ${
-                  errors.email 
-                    ? "border-red-300 focus:ring-red-500/20" 
-                    : "border-gray-300 focus:ring-blue-600/20"
-                }`}
               />
               {errors.email && (
-                <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
               )}
             </div>
 
@@ -95,12 +114,9 @@ const RegisterPage = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
+                  className={`w-full px-4 py-2.5 border rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-colors ${errors.password ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   {...register("password")}
-                  className={`w-full px-4 py-2.5 border rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-blue-600 transition-colors ${
-                    errors.password 
-                      ? "border-red-300 focus:ring-red-500/20" 
-                      : "border-gray-300 focus:ring-blue-600/20"
-                  }`}
                 />
                 <button
                   type="button"
@@ -111,8 +127,11 @@ const RegisterPage = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
               )}
+              <p className="mt-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                Minimum 6 characters
+              </p>
             </div>
 
             {/* Input Confirm Password */}
@@ -124,12 +143,9 @@ const RegisterPage = () => {
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
+                  className={`w-full px-4 py-2.5 border rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-colors ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   {...register("confirmPassword")}
-                  className={`w-full px-4 py-2.5 border rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-blue-600 transition-colors ${
-                    errors.confirmPassword 
-                      ? "border-red-300 focus:ring-red-500/20" 
-                      : "border-gray-300 focus:ring-blue-600/20"
-                  }`}
                 />
                 <button
                   type="button"
@@ -140,7 +156,7 @@ const RegisterPage = () => {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
               )}
             </div>
 
@@ -148,33 +164,21 @@ const RegisterPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 mt-2 sm:mt-4 transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#1d58d8] hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 mt-2 sm:mt-4 transition-colors"
             >
-              {isLoading ? (
-                <span>Creating account...</span>
-              ) : (
-                <>
-                  Sign Up <FiArrowRight size={18} />
-                </>
-              )}
+              {isLoading ? "Creating account..." : "Sign Up"} <FiArrowRight size={18} />
             </button>
 
             {/* Disclaimer */}
-            <p className="text-xs text-center text-gray-500 mt-4 leading-relaxed">
-              By signing up, you agree to our{" "}
-              <Link to="/terms" className="text-blue-600 hover:underline">Terms of Service</Link>
-              {" "}and{" "}
-              <Link to="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>.
+            <p className="text-base sm:text-xs text-center text-gray-500 mt-4 leading-relaxed">
+              By signing up, you agree to our <a href="#" className="text-blue-600 hover:underline">Terms of Service</a> and <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>.
             </p>
           </form>
         </div>
 
         {/* Tautan Login */}
         <p className="mt-6 sm:mt-8 text-xs sm:text-sm text-gray-600">
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-600 font-semibold hover:underline">
-            Log in
-          </Link>
+          Already have an account? <Link to="/login" className="text-blue-600 font-medium hover:underline">Log in</Link>
         </p>
 
       </main>
