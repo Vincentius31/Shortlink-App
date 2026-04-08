@@ -99,12 +99,24 @@ func (s *UserService) Login(ctx context.Context, req model.LoginRequest) (model.
 	return model.LoginResponse{
 		Token: tokenString,
 		User: model.UserBrief{
-			ID: user.ID,
-			Email:  user.Email,
+			ID:    user.ID,
+			Email: user.Email,
 		},
 	}, nil
 }
 
 func (s *UserService) FindByID(ctx context.Context, id int) (*model.User, error) {
 	return s.repo.GetByID(ctx, id)
+}
+
+func (s *UserService) GetProfile(ctx context.Context, userID int) (*model.UserProfileResponse, error) {
+	return s.repo.GetProfileInfo(ctx, userID)
+}
+
+func (s *UserService) UpdateProfile(ctx context.Context, userID int, fullName, bio, avatarPath string) error {
+	if len(fullName) > 100 {
+		return errors.New("full name is too long (max 100 characters)")
+	}
+
+	return s.repo.UpdateProfileWithTx(ctx, userID, fullName, bio, avatarPath)
 }
