@@ -10,23 +10,24 @@ import (
 
 func SetupRoutes(r *gin.Engine, conn *pgxpool.Pool) {
 	container := di.NewContainer(conn)
-
 	authHandler := container.AuthHandler()
 	linkHandler := container.LinkHandler()
 
-	authRoutes := r.Group("/api")
+	api := r.Group("/api")
 	{
-		authRoutes.POST("/register", authHandler.Register)
-		authRoutes.POST("/login", authHandler.Login)
-	}
+		api.POST("/register", authHandler.Register)
+		api.POST("/login", authHandler.Login)
 
-	linkRoutes := r.Group("/api")
-	linkRoutes.Use(middleware.AuthMiddleware())
-	{
-		linkRoutes.POST("/links", linkHandler.Create)
-		linkRoutes.GET("/links", linkHandler.GetAll)
-		linkRoutes.DELETE("/links/:id", linkHandler.Delete)
-	}
+		protected := api.Group("")
+		protected.Use(middleware.AuthMiddleware())
+		{
+			protected.GET("/me", authHandler.Me)
+			protected.POST("/profile/update", authHandler.UpdateProfile)
 
+			protected.POST("/links", linkHandler.Create)
+			protected.GET("/links", linkHandler.GetAll)
+			protected.DELETE("/links/:id", linkHandler.Delete)
+		}
+	}
 	r.GET("/:slug", linkHandler.Redirect)
 }
