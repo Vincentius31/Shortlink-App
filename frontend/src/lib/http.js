@@ -2,8 +2,8 @@ export const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:8888"
 
 async function http(url, opts = {}) {
   const token = localStorage.getItem('token');
+
   const headers = {
-    'Content-Type': 'application/json',
     ...opts.headers
   };
 
@@ -13,10 +13,21 @@ async function http(url, opts = {}) {
     headers.Authorization = "Bearer " + opts.token;
   }
 
+  let body = opts.body;
+  if (body) {
+    if (body instanceof FormData) {
+      delete headers['Content-Type'];
+    }
+    else {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(body);
+    }
+  }
+
   const response = await fetch(BASE_URL + url, {
     method: opts.method || "GET",
     headers: headers,
-    body: opts.body ? JSON.stringify(opts.body) : undefined
+    body: body
   });
 
   if (response.status === 401 && !url.includes('/api/login')) {
