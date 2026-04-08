@@ -6,7 +6,7 @@ import { FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
-import Modal from "../components/Modal"; 
+import Modal from "../components/Modal";
 import http from "../lib/http";
 import { useAuth } from "../hooks/useAuth";
 
@@ -59,10 +59,15 @@ const LoginPage = () => {
           title: "Login Successful!",
           message: "Welcome back! Redirecting you to your dashboard.",
           type: "success",
-          onConfirm: () => {
-            login(result.results.token);
-            localStorage.setItem("user_email", data.email);
-            navigate("/dashboard");
+          onConfirm: async () => {
+            try {
+              await login(result.results.token);
+              localStorage.setItem("user_email", data.email);
+              navigate("/dashboard");
+            } catch (err) {
+              console.error("Login process error:", err);
+              navigate("/dashboard");
+            }
           },
         });
       } else {
