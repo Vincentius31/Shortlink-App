@@ -35,10 +35,22 @@ func main() {
 	}
 
 	r := gin.Default()
+
+	r.MaxMultipartMemory = 8 << 20
+
+	if _, err := os.Stat("uploads"); os.IsNotExist(err) {
+		err := os.Mkdir("uploads", 0755)
+		if err != nil {
+			fmt.Println("Error creating uploads directory:", err)
+		} else {
+			fmt.Println("Directory 'uploads' created successfully.")
+		}
+	}
+
 	r.Use(corsMiddleware())
+	r.Static("/uploads", "./uploads")
 
 	databaseURL := os.Getenv("DATABASE_URL")
-
 	config, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to process database configuration: %v\n", err)
