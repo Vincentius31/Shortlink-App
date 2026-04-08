@@ -1,23 +1,24 @@
-import React from "react";
+import React, { useState } from "react"; 
 import { useNavigate, Link } from "react-router-dom";
 import { FiX, FiPlus, FiLogOut, FiHome, FiLink, FiBarChart2 } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
 import { BASE_URL } from "../lib/http";
+import Modal from "./Modal"; 
 
 const Sidebar = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
     const avatarUrl = user?.profile_picture
         ? `${BASE_URL}/${user.profile_picture}`
         : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'Vincent'}`;
 
-    const handleLogout = () => {
-        if (window.confirm("Are you sure you want to logout?")) {
-            logout();
-            navigate("/login");
-            if (onClose) onClose();
-        }
+    const confirmLogout = () => {
+        logout();
+        setIsLogoutModalOpen(false);
+        if (onClose) onClose();
+        navigate("/login");
     };
 
     return (
@@ -31,6 +32,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="p-6 flex flex-col gap-6">
+                    {/* ... (Nav links tetap sama) ... */}
                     <nav className="flex flex-col gap-4 text-sm font-medium text-gray-600">
                         <Link to="/dashboard" onClick={onClose} className="flex items-center gap-2 hover:text-blue-600 transition-colors"><FiHome size={18} /> Dashboard</Link>
                         <Link to="/dashboard" onClick={onClose} className="flex items-center gap-2 hover:text-blue-600 transition-colors"><FiBarChart2 size={18} /> Analytics</Link>
@@ -47,8 +49,14 @@ const Sidebar = ({ isOpen, onClose }) => {
                                         <span className="text-[10px] text-gray-500">{user.email}</span>
                                     </div>
                                 </Link>
-                                <Link to="/create-link" onClick={onClose} className="w-full bg-[#1d58d8] hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm"><FiPlus size={18} /> Create New Link</Link>
-                                <button onClick={handleLogout} className="w-full text-center py-2.5 text-red-500 font-medium hover:text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors mt-2 flex items-center justify-center gap-2"><FiLogOut size={18} /> Logout</button>
+                                <Link to="/create-link" onClick={onClose} className="w-full bg-[#1d58d8] hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm shadow-sm text-center"><FiPlus size={18} /> Create New Link</Link>
+
+                                <button
+                                    onClick={() => setIsLogoutModalOpen(true)}
+                                    className="w-full text-center py-2.5 text-red-500 font-medium hover:text-red-600 hover:bg-red-50 rounded-lg text-sm transition-colors mt-2 flex items-center justify-center gap-2"
+                                >
+                                    <FiLogOut size={18} /> Logout
+                                </button>
                             </>
                         ) : (
                             <>
@@ -59,6 +67,15 @@ const Sidebar = ({ isOpen, onClose }) => {
                     </div>
                 </div>
             </div>
+
+            <Modal
+                isOpen={isLogoutModalOpen}
+                onClose={() => setIsLogoutModalOpen(false)}
+                title="Confirm Logout"
+                message="Are you sure you want to sign out?"
+                type="warning"
+                onConfirm={confirmLogout}
+            />
         </>
     );
 };

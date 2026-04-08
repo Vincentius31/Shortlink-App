@@ -4,9 +4,12 @@ import { FiMenu, FiPlus } from "react-icons/fi";
 import Sidebar from "./Sidebar";
 import { useAuth } from "../hooks/useAuth";
 import { BASE_URL } from "../lib/http";
+import Modal from "./Modal"; 
 
 const Navbar = ({ activePage = "" }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    
     const navigate = useNavigate();
     const { user, logout } = useAuth();
 
@@ -18,11 +21,10 @@ const Navbar = ({ activePage = "" }) => {
         document.body.style.overflow = isSidebarOpen ? "hidden" : "unset";
     }, [isSidebarOpen]);
 
-    const handleLogout = () => {
-        if (window.confirm("Are you sure you want to logout?")) {
-            logout();
-            navigate("/login");
-        }
+    const confirmLogout = () => {
+        logout();
+        setIsLogoutModalOpen(false);
+        navigate("/login");
     };
 
     const getLinkClass = (pageName) => {
@@ -64,7 +66,12 @@ const Navbar = ({ activePage = "" }) => {
                                             {user?.full_name || 'Account'}
                                         </span>
                                     </Link>
-                                    <button onClick={handleLogout} className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors">Logout</button>
+                                    <button 
+                                        onClick={() => setIsLogoutModalOpen(true)} 
+                                        className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors"
+                                    >
+                                        Logout
+                                    </button>
                                 </div>
                             </>
                         ) : (
@@ -82,6 +89,15 @@ const Navbar = ({ activePage = "" }) => {
             </header>
 
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+            <Modal 
+                isOpen={isLogoutModalOpen}
+                onClose={() => setIsLogoutModalOpen(false)}
+                title="Confirm Logout"
+                message="Are you sure you want to sign out? You will need to login again to access your dashboard."
+                type="warning"
+                onConfirm={confirmLogout}
+            />
         </>
     );
 };
