@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 	"shortlink-app/internal/model"
 	"shortlink-app/internal/service"
 	"strconv"
@@ -126,18 +127,18 @@ func (h *LinkHandler) Delete(ctx *gin.Context) {
 
 // Redirect handles the short URL redirect
 func (h *LinkHandler) Redirect(ctx *gin.Context) {
-	slug := ctx.Param("slug")
+    slug := ctx.Param("slug")
 
-	originalURL, err := h.linkService.GetOriginalURL(ctx.Request.Context(), slug)
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, model.WebResponse{
-			Success: false,
-			Message: "Link not found",
-			Results: nil,
-		})
-		return
-	}
+    originalURL, err := h.linkService.GetOriginalURL(ctx.Request.Context(), slug)
+    if err != nil {
+        frontendURL := os.Getenv("FRONTEND_URL") 
+        if frontendURL == "" {
+            frontendURL = "http://localhost:5173"
+        }
 
-	
-	ctx.Redirect(http.StatusFound, originalURL)
+        ctx.Redirect(http.StatusFound, frontendURL+"/not-found")
+        return
+    }
+
+    ctx.Redirect(http.StatusFound, originalURL)
 }
