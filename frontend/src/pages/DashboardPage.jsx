@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Modal from "../components/Modal";
 import { FiSearch, FiFilter, FiLink, FiCalendar, FiBarChart2, FiCopy, FiTrash2, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useAuth } from "../hooks/useAuth";
-import http from "../lib/http"; 
+import http from "../lib/http";
 
 const DashboardPage = () => {
-  const { user } = useAuth(); 
+  const { user } = useAuth();
   const [links, setLinks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
+  const closeModal = () => setModalConfig({ ...modalConfig, isOpen: false });
 
   const fetchLinks = async () => {
     setIsLoading(true);
@@ -32,25 +43,54 @@ const DashboardPage = () => {
     }
   }, [user]);
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this link?");
-    if (!confirmDelete) return;
-
+  const executeDelete = async (id) => {
     try {
       const response = await http(`/api/links/${id}`, { method: "DELETE" });
       if (response.success) {
         setLinks(links.filter((link) => link.id !== id));
+        setModalConfig({
+          isOpen: true,
+          title: "Deleted!",
+          message: "The link has been successfully deleted.",
+          type: "success",
+        });
       } else {
-        alert(response.message || "Gagal menghapus link");
+        setModalConfig({
+          isOpen: true,
+          title: "Delete Failed",
+          message: response.message || "Gagal menghapus link",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("Error deleting link:", error);
+      setModalConfig({
+        isOpen: true,
+        title: "System Error",
+        message: "An error occurred while deleting the link.",
+        type: "error",
+      });
     }
+  };
+
+  const handleDelete = (id) => {
+    setModalConfig({
+      isOpen: true,
+      title: "Delete Link",
+      message: "Are you sure you want to delete this link? This action cannot be undone.",
+      type: "confirm",
+      onConfirm: () => executeDelete(id),
+    });
   };
 
   const handleCopy = (shortUrl) => {
     navigator.clipboard.writeText(shortUrl);
-    alert("Link copied to clipboard!");
+    setModalConfig({
+      isOpen: true,
+      title: "Copied!",
+      message: "Link copied to clipboard!",
+      type: "success",
+    });
   };
 
   const formatDate = (dateString) => {
@@ -181,6 +221,15 @@ const DashboardPage = () => {
       </main>
 
       <Footer variant="login" />
+
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+      />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import * as yup from "yup";
 import { FiArrowRight, FiLink, FiEye, FiEyeOff } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
+import Modal from "../components/Modal"; 
 import http from "../lib/http";
 
 const schema = yup.object({
@@ -22,6 +23,16 @@ const RegisterPage = () => {
   const [apiError, setApiError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null,
+  });
+
+  const closeModal = () => setModalConfig({ ...modalConfig, isOpen: false });
 
   const {
     register,
@@ -46,8 +57,13 @@ const RegisterPage = () => {
       });
 
       if (result && result.success) {
-        alert("Registration successful! Please log in.");
-        navigate("/login");
+        setModalConfig({
+          isOpen: true,
+          title: "Registration Successful!",
+          message: "Your account has been created. Please log in to continue.",
+          type: "success",
+          onConfirm: () => navigate("/login"),
+        });
       } else {
         setApiError(result.message || "Failed to register");
       }
@@ -79,7 +95,6 @@ const RegisterPage = () => {
 
         {/* Card Form */}
         <div className="bg-white w-full max-w-105 rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
-          {/* API Error */}
           {apiError && (
             <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 border border-red-200 text-sm">
               {apiError}
@@ -185,6 +200,14 @@ const RegisterPage = () => {
 
       <Footer variant="register" />
 
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+      />
     </div>
   );
 };

@@ -1,22 +1,38 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import http from "../lib/http"; 
+import http from "../lib/http";
 import { FiArrowLeft, FiLink, FiEye, FiZap, FiTrendingUp, FiGrid } from "react-icons/fi";
+import Modal from "../components/Modal";
 
 const CreateLinkPage = () => {
   const navigate = useNavigate();
-  
+
   const [originalUrl, setOriginalUrl] = useState("");
   const [customSlug, setCustomSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "error",
+    onConfirm: null,
+  });
+
+  const closeModal = () => setModalConfig({ ...modalConfig, isOpen: false });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!originalUrl.startsWith("http://") && !originalUrl.startsWith("https://")) {
-      alert("URL must start with http:// or https://");
+      setModalConfig({
+        isOpen: true,
+        title: "Invalid URL",
+        message: "Destination URL must start with http:// or https://",
+        type: "error",
+      });
       return;
     }
 
@@ -34,14 +50,29 @@ const CreateLinkPage = () => {
       });
 
       if (response.success) {
-        alert("Link successfully created!");
-        navigate("/dashboard"); 
+        setModalConfig({
+          isOpen: true,
+          title: "Success!",
+          message: "Your new short link has been successfully created.",
+          type: "success",
+          onConfirm: () => navigate("/dashboard"),
+        });
       } else {
-        alert(response.message || "Failed to create link.");
+        setModalConfig({
+          isOpen: true,
+          title: "Creation Failed",
+          message: response.message || "Failed to create link. Please try again.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("Error creating link:", error);
-      alert("An error occurred while creating the link.");
+      setModalConfig({
+        isOpen: true,
+        title: "System Error",
+        message: "An unexpected error occurred while communicating with the server.",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -49,13 +80,10 @@ const CreateLinkPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fbfcfd] font-sans">
-      
       <Navbar isLoggedIn={true} activePage="dashboard" />
-      
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        
         {/* Tombol Back */}
-        <button 
+        <button
           onClick={() => navigate("/dashboard")}
           className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors mb-6 focus:outline-none"
         >
@@ -75,7 +103,6 @@ const CreateLinkPage = () => {
         {/* Card Form Utama */}
         <div className="bg-white border border-gray-100 shadow-[0_2px_15px_rgb(0,0,0,0.03)] rounded-2xl p-6 sm:p-8 mb-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            
             {/* Input Destination URL */}
             <div>
               <label className="block text-xs font-bold text-gray-700 tracking-widest uppercase mb-2">
@@ -192,6 +219,15 @@ const CreateLinkPage = () => {
       </main>
 
       <Footer />
+
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+      />
     </div>
   );
 };
