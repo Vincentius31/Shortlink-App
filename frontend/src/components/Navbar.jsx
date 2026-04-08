@@ -3,18 +3,19 @@ import { useNavigate, Link } from "react-router-dom";
 import { FiMenu, FiPlus } from "react-icons/fi";
 import Sidebar from "./Sidebar";
 import { useAuth } from "../hooks/useAuth";
+import { BASE_URL } from "../lib/http";
 
 const Navbar = ({ activePage = "" }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const navigate = useNavigate();
     const { user, logout } = useAuth();
 
+    const avatarUrl = user?.profile_picture
+        ? `${BASE_URL}/${user.profile_picture}`
+        : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'Vincent'}`;
+
     useEffect(() => {
-        if (isSidebarOpen) {
-            document.body.style.overflow = "hidden";
-        } else {
-            document.body.style.overflow = "unset";
-        }
+        document.body.style.overflow = isSidebarOpen ? "hidden" : "unset";
     }, [isSidebarOpen]);
 
     const handleLogout = () => {
@@ -36,12 +37,8 @@ const Navbar = ({ activePage = "" }) => {
         <>
             <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-30">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 lg:py-5 flex justify-between items-center">
-
                     <div className="flex items-center gap-8 lg:gap-12">
-                        <Link to="/" className="text-xl font-extrabold text-gray-900 tracking-tight hover:text-blue-600 transition-colors">
-                            ShortLink
-                        </Link>
-
+                        <Link to="/" className="text-xl font-extrabold text-gray-900 tracking-tight hover:text-blue-600 transition-colors">ShortLink</Link>
                         <nav className="hidden md:flex gap-6 lg:gap-8">
                             <Link to="/dashboard" className={getLinkClass("dashboard")}>Dashboard</Link>
                             <Link to="/dashboard" className={getLinkClass("analytics")}>Analytics</Link>
@@ -49,7 +46,6 @@ const Navbar = ({ activePage = "" }) => {
                         </nav>
                     </div>
 
-                    {/* Bagian Kanan Desktop */}
                     <div className="hidden md:flex items-center gap-6">
                         {user ? (
                             <>
@@ -58,47 +54,34 @@ const Navbar = ({ activePage = "" }) => {
                                 </Link>
                                 <div className="w-px h-6 bg-gray-200"></div>
                                 <div className="flex items-center gap-4">
-                                    {/* Avatar clickable ke profile */}
-                                    <Link to="/profile" className="hover:opacity-80 transition-opacity">
+                                    <Link to="/profile" className="hover:opacity-80 transition-opacity flex items-center gap-2">
                                         <img
-                                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Vincent"
+                                            src={avatarUrl}
                                             alt="User Avatar"
-                                            className="w-8 h-8 rounded-full bg-blue-50 border border-gray-200"
+                                            className="w-8 h-8 rounded-full bg-blue-50 border border-gray-200 object-cover"
                                         />
+                                        <span className="text-xs font-semibold text-gray-700 hidden lg:block">
+                                            {user?.full_name || 'Account'}
+                                        </span>
                                     </Link>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors"
-                                    >
-                                        Logout
-                                    </button>
+                                    <button onClick={handleLogout} className="text-sm font-medium text-gray-500 hover:text-red-600 transition-colors">Logout</button>
                                 </div>
                             </>
                         ) : (
                             <>
-                                <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                                    Login
-                                </Link>
-                                <Link to="/register" className="bg-[#1d58d8] hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors shadow-sm">
-                                    Register
-                                </Link>
+                                <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Login</Link>
+                                <Link to="/register" className="bg-[#1d58d8] hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors shadow-sm">Register</Link>
                             </>
                         )}
                     </div>
 
-                    <button
-                        className="md:hidden text-gray-600 hover:text-gray-900 p-1 focus:outline-none"
-                        onClick={() => setIsSidebarOpen(true)}
-                    >
+                    <button className="md:hidden text-gray-600 hover:text-gray-900 p-1 focus:outline-none" onClick={() => setIsSidebarOpen(true)}>
                         <FiMenu size={24} />
                     </button>
                 </div>
             </header>
 
-            <Sidebar
-                isOpen={isSidebarOpen}
-                onClose={() => setIsSidebarOpen(false)}
-            />
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         </>
     );
 };
